@@ -1,7 +1,6 @@
 import { ExportTarget } from ".";
 import { addComment } from "./comment";
 import { exportEllipse } from "./ellipse";
-import { exportLine } from "./line";
 import { exportRectangle } from "./rectangle";
 
 export function exportNode(
@@ -17,19 +16,12 @@ export function exportNode(
 
   // "SLICE", "FRAME", "GROUP", "COMPONENT_SET",
   // "COMPONENT", "INSTANCE", "BOOLEAN_OPERATION",
-  // "VECTOR", "STAR", "POLYGON",
+  // "VECTOR", "STAR", "POLYGON", "LINE",
   // "TEXT", "STICKY", "CONNECTOR", "SHAPE_WITH_TEXT",
   // "STAMP", "WIDGET";
   switch (node.type) {
     case "RECTANGLE":
       exportRectangle(sb, target, {
-        node,
-        relativeX,
-        relativeY,
-      });
-      break;
-    case "LINE":
-      exportLine(sb, target, {
         node,
         relativeX,
         relativeY,
