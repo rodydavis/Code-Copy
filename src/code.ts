@@ -5,6 +5,15 @@ figma.showUI(__html__, {
   height: 500,
 });
 
+let exportType = ExportTarget.Canvas;
+
+figma.ui.onmessage = (msg) => {
+  if (msg.type === "export-type") {
+    exportType = msg.value;
+    refresh();
+  }
+};
+
 function setCode(value: string) {
   figma.ui.postMessage({
     type: "set-code",
@@ -16,6 +25,6 @@ refresh();
 figma.on("selectionchange", () => refresh());
 
 function refresh() {
-  const code = exportCode(ExportTarget.Canvas);
+  const code = exportCode(exportType);
   setCode(code);
 }

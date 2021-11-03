@@ -10,14 +10,30 @@
         margin: 0;
         padding: 0;
         overflow: hidden;
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        grid-template-areas: "tabs" "code";
+        width: 100%;
+        height: 100vh;
+      }
+      #tabs {
+        grid-area: tabs;
+        width: 100%;
       }
       #editor {
+        grid-template: code;
         width: 100%;
         height: 100%;
+        background-color: #263238;
       }
     </style>
   </head>
   <body>
+    <mwc-tab-bar id="tabs">
+      <mwc-tab label="Canvas"></mwc-tab>
+      <mwc-tab label="SVG"></mwc-tab>
+    </mwc-tab-bar>
     <textarea id="editor"></textarea>
     <script src="./src/ui.js" type="module"></script>
   </body>
