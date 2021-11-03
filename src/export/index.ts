@@ -16,12 +16,29 @@ export function exportCode(target: ExportTarget) {
   const nodes = figma.currentPage.selection || [];
   if (nodes.length === 0) return sb.join("\n");
 
-  const selectionWidth = nodes.reduce((acc, node) => {
-    return Math.max(acc, node.width);
-  }, 0);
-  const selectionHeight = nodes.reduce((acc, node) => {
-    return Math.max(acc, node.height);
-  }, 0);
+  const topX = nodes.reduce((acc, node) => {
+    return Math.min(acc, node.x);
+  }, nodes[0].x);
+  const topY = nodes.reduce((acc, node) => {
+    return Math.min(acc, node.y);
+  }, nodes[0].y);
+
+  let selectionWidth = 0;
+  let selectionHeight = 0;
+
+  for (const node of nodes) {
+    selectionWidth = Math.max(selectionWidth, node.x + node.width);
+    selectionHeight = Math.max(selectionHeight, node.y + node.height);
+  }
+
+  const exportAllNodes = () => {
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      if (!node.visible) continue;
+      exportNode(sb, target, node, topX, topY);
+    }
+  };
+
   switch (target) {
     case ExportTarget.Canvas:
       sb.push(`const canvas = document.createElement('canvas');`);
@@ -30,21 +47,22 @@ export function exportCode(target: ExportTarget) {
       sb.push(`const ctx = canvas.getContext('2d');`);
       sb.push(``);
 
-      for (let i = 0; i < nodes.length; i++) {
-        const node = nodes[i];
-        exportNode(sb, target, node);
-      }
+      exportAllNodes();
       break;
     case ExportTarget.SVG:
       sb.push(
-        `<svg xmlns="http://www.w3.org/2000/svg" width="${selectionWidth}" height="${selectionHeight}">`
+        `<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 ${selectionWidth} ${selectionHeight}">`
       );
       sb.push(``);
-      for (let i = 0; i < nodes.length; i++) {
-        const node = nodes[i];
-        exportNode(sb, target, node);
-      }
+      exportAllNodes();
+      sb.push(``);
       sb.push(`</svg>`);
   }
   return sb.join("\n");
+}
+
+export interface NodeMetaData<T extends SceneNode> {
+  node: T;
+  relativeX: number;
+  relativeY: number;
 }
