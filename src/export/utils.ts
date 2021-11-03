@@ -1,5 +1,5 @@
 export function getPaint(node: SceneNode & GeometryMixin) {
-  let fillColor: string | undefined = "black";
+  let fillColor: string | undefined = undefined;
   let strokeColor: string | undefined = undefined;
 
   if (

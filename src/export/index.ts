@@ -27,8 +27,10 @@ export function exportCode(target: ExportTarget) {
   let selectionHeight = 0;
 
   for (const node of nodes) {
-    selectionWidth = Math.max(selectionWidth, node.x + node.width);
-    selectionHeight = Math.max(selectionHeight, node.y + node.height);
+    const relativeX = node.x - topX;
+    const relativeY = node.y - topY;
+    selectionWidth = Math.max(selectionWidth, relativeX + node.width);
+    selectionHeight = Math.max(selectionHeight, relativeY + node.height);
   }
 
   const exportAllNodes = () => {

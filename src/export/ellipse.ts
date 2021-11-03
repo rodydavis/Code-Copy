@@ -1,10 +1,10 @@
 import { ExportTarget, NodeMetaData } from ".";
 import { getPaint, xmlNode } from "./utils";
 
-export function exportRectangle(
+export function exportEllipse(
   sb: string[],
   target: ExportTarget,
-  meta: NodeMetaData<RectangleNode>
+  meta: NodeMetaData<EllipseNode>
 ) {
   const node = meta.node;
   const x = meta.relativeX;
@@ -14,9 +14,15 @@ export function exportRectangle(
     case ExportTarget.Canvas:
       sb.push("ctx.save();");
       sb.push("ctx.beginPath();");
-      sb.push(`ctx.rect(${x}, ${y}, ${node.width}, ${node.height});`);
-      sb.push(`ctx.fillStyle = "${fillColor}";`);
-      sb.push("ctx.fill();");
+      sb.push(
+        `ctx.ellipse(${x}, ${y}, ${node.width / 2}, ${
+          node.height / 2
+        }, 0, 0, 2 * Math.PI);`
+      );
+      if (fillColor) {
+        sb.push(`ctx.fillStyle = "${fillColor}";`);
+        sb.push("ctx.fill();");
+      }
       if (strokeColor) {
         sb.push(`ctx.strokeStyle = "${strokeColor}";`);
         sb.push(`ctx.lineWidth = ${node.strokeWeight};`);
@@ -26,11 +32,11 @@ export function exportRectangle(
       break;
     case ExportTarget.SVG:
       sb.push(
-        xmlNode("rect", {
-          x: `${x}`,
-          y: `${y}`,
-          width: `${node.width}`,
-          height: `${node.height}`,
+        xmlNode("ellipse", {
+          cx: `${x + node.width / 2}`,
+          cy: `${y + node.height / 2}`,
+          rx: `${node.width / 2}`,
+          ry: `${node.height / 2}`,
           ...(strokeColor ? { stroke: strokeColor } : {}),
           ...(fillColor ? { fill: fillColor } : {}),
         })
