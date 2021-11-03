@@ -4,6 +4,7 @@
   "description": "Copy code for Figma designs",
   "scripts": {
     "tsc": "tsc -p tsconfig.json",
+    "tsc:watch": "tsc -p tsconfig.json --watch",
     "dev": "npx webpack --mode=development --watch",
     "copy": "mkdir -p build && cp ./manifest.json ./build/manifest.json && cp ./dist/ui.html ./build/ui.html && cp ./dist/code.js ./build/code.js",
     "build": "npx webpack-cli --mode=production && npm run copy",
@@ -16,10 +17,13 @@
   ],
   "devDependencies": {
     "@figma/plugin-typings": "^1.23.0",
-    "css-loader": "^5.2.4",
+    "css-loader": "^5.2.7",
+    "file-loader": "^6.2.0",
     "html-webpack-inline-source-plugin": "^1.0.0-beta.2",
     "html-webpack-plugin": "^4.3.0",
-    "monaco-editor-webpack-plugin": "^5.0.0",
+    "sass": "^1.43.4",
+    "sass-loader": "^10",
+    "style-loader": "^2.0.0",
     "ts-loader": "^8.0.0",
     "typescript": "^4.2.4",
     "url-loader": "^4.1.1",
@@ -27,6 +31,7 @@
     "webpack-cli": "^4.9.1"
   },
   "dependencies": {
+    "codemirror": "^5.63.3",
     "monaco-editor": "^0.29.1"
   }
 }

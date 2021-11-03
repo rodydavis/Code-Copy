@@ -1,5 +1,4 @@
 const HtmlWebpackInlineSourcePlugin = require("html-webpack-inline-source-plugin");
-const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
 
@@ -18,13 +17,16 @@ module.exports = (env, argv) => ({
       { test: /\.ttf$/, use: ["file-loader"] },
     ],
   },
-  resolve: { extensions: [".ts", ".js"] },
+  resolve: {
+    extensions: [".ts", ".js"],
+    modules: [ 'node_modules']
+  },
   output: {
     filename: "[name].js",
+    publicPath: '/',
     path: path.resolve(__dirname, "dist"),
   },
   plugins: [
-    new MonacoWebpackPlugin(),
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, "ui.html"),
       filename: "ui.html",

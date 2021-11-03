@@ -1,16 +1,14 @@
-// import * as monaco from "monaco-editor";
+import * as CodeMirror from "codemirror";
+import "codemirror/lib/codemirror.css";
+import "codemirror/theme/material.css";
+import "codemirror/mode/javascript/javascript";
 
-const createBtn = document.getElementById("create")! as HTMLButtonElement;
-const textBox = document.getElementById("count")! as HTMLInputElement;
-createBtn.onclick = () => {
-  const count = parseInt(textBox.value, 10);
-  parent.postMessage(
-    { pluginMessage: { type: "create-rectangles", count } },
-    "*"
-  );
-};
+const editorElem = document.getElementById("editor") as HTMLDivElement;
+var editor = CodeMirror.fromTextArea(editorElem, {
+  theme: "material",
+  lineNumbers: true,
+  readonly: true,
+});
 
-const cancelBtn = document.getElementById("cancel")! as HTMLButtonElement;
-cancelBtn.onclick = () => {
-  parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
-};
+editor.setValue(`console.log("Hello, world");`);
+editor.setSize("100%", "100%");
