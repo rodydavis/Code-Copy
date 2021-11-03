@@ -10,5 +10,13 @@ var editor = CodeMirror.fromTextArea(editorElem, {
   readonly: true,
 });
 
-editor.setValue(`console.log("Hello, world");`);
+// editor.setValue(`console.log("Hello, world");`);
 editor.setSize("100%", "100%");
+
+onmessage = (event) => {
+  const message = event.data.pluginMessage;
+  if (message.type === "set-code") {
+    editor.setValue(message.code);
+    editor.setSize("100%", "100%");
+  }
+};

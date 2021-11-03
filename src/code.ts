@@ -1,21 +1,21 @@
+import { exportCode, ExportTarget } from "./export";
+
 figma.showUI(__html__, {
   width: 700,
   height: 500,
 });
 
-figma.ui.onmessage = (msg) => {
-  if (msg.type === "create-rectangles") {
-    const nodes: SceneNode[] = [];
-    for (let i = 0; i < msg.count; i++) {
-      const rect = figma.createRectangle();
-      rect.x = i * 150;
-      rect.fills = [{ type: "SOLID", color: { r: 1, g: 0.5, b: 0 } }];
-      figma.currentPage.appendChild(rect);
-      nodes.push(rect);
-    }
-    figma.currentPage.selection = nodes;
-    figma.viewport.scrollAndZoomIntoView(nodes);
-  }
+function setCode(value: string) {
+  figma.ui.postMessage({
+    type: "set-code",
+    code: value,
+  });
+}
 
-  figma.closePlugin();
-};
+refresh();
+figma.on("selectionchange", () => refresh());
+
+function refresh() {
+  const code = exportCode(ExportTarget.Canvas);
+  setCode(code);
+}
