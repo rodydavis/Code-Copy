@@ -223,9 +223,11 @@ export class SVGExporter extends BaseExporter<string[]> {
           ...(fillColor ? { fill: fillColor } : {}),
           ...(strokeColor ? { stroke: strokeColor } : {}),
           "stroke-width": `${strokeWidth}`,
-          transform: `rotate(${rotation}, ${x}, ${y})`,
+          x: `${x}`,
+          y: `${y}`,
           rx: `${borderRadius}`,
           ry: `${borderRadius}`,
+          transform: `rotate(${rotation}, ${x}, ${y})`,
         },
         children: [title(node.name)],
       })
@@ -258,6 +260,8 @@ export class SVGExporter extends BaseExporter<string[]> {
           ...(strokeColor ? { stroke: strokeColor } : {}),
           "stroke-width": `${strokeWidth}`,
           transform: `rotate(${rotation}, ${x}, ${y})`,
+          x: `${x}`,
+          y: `${y}`,
         },
         children: [title(node.name)],
       })
