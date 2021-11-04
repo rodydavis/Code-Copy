@@ -1,4 +1,4 @@
-import { BaseExporter } from "./base";
+import { BaseExporter, Offset } from "./base";
 import { formatXml, xmlNode } from "./utils";
 
 export class SVGExporter extends BaseExporter<string[]> {
@@ -57,6 +57,9 @@ export class SVGExporter extends BaseExporter<string[]> {
     const { x, y, width, height } = this.relativeRect(node);
     const { fillColor, strokeColor } = this.paintDetails(node);
     const strokeWidth = node.strokeWeight;
+    const borderRadius =
+      typeof node.cornerRadius === "number" ? node.cornerRadius : 0;
+    const rotation = node.rotation;
     base.push(
       xmlNode({
         tag: "rect",
@@ -68,6 +71,9 @@ export class SVGExporter extends BaseExporter<string[]> {
           ...(fillColor ? { fill: fillColor } : {}),
           ...(strokeColor ? { stroke: strokeColor } : {}),
           "stroke-width": `${strokeWidth}`,
+          rx: `${borderRadius}`,
+          ry: `${borderRadius}`,
+          transform: `rotate(${rotation} ${x} ${y})`,
         },
         children: [xmlNode({ tag: "title", children: [node.name] })],
       })
@@ -78,6 +84,7 @@ export class SVGExporter extends BaseExporter<string[]> {
   ellipse(base: string[], node: EllipseNode): string[] {
     const { x, y, width, height } = this.relativeRect(node);
     const { fillColor, strokeColor } = this.paintDetails(node);
+    const rotation = node.rotation;
     const cx = x + width / 2;
     const cy = y + height / 2;
     const rx = width / 2;
@@ -94,6 +101,7 @@ export class SVGExporter extends BaseExporter<string[]> {
           ...(fillColor ? { fill: fillColor } : {}),
           ...(strokeColor ? { stroke: strokeColor } : {}),
           "stroke-width": `${strokeWidth}`,
+          transform: `rotate(${rotation} ${cx} ${cy})`,
         },
         children: [xmlNode({ tag: "title", children: [node.name] })],
       })
@@ -104,6 +112,7 @@ export class SVGExporter extends BaseExporter<string[]> {
   text(base: string[], node: TextNode): string[] {
     const { x, y, width, height } = this.relativeRect(node);
     const { fillColor, strokeColor } = this.paintDetails(node);
+    const rotation = node.rotation;
     const textAlign = node.textAlignHorizontal;
     const textBaseline = node.textAlignVertical;
     const fontSize = typeof node.fontSize === "number" ? node.fontSize : 12;
@@ -148,6 +157,7 @@ export class SVGExporter extends BaseExporter<string[]> {
           "font-size": `${fontSize}`,
           "font-family": `${fontFamily}`,
           "font-style": `${fontStyle}`,
+          transform: `rotate(${rotation} ${x} ${y})`,
         },
         children: [textData],
       })
@@ -157,10 +167,73 @@ export class SVGExporter extends BaseExporter<string[]> {
   }
 
   line(base: string[], node: LineNode): string[] {
+    const { x, y, width, height } = this.relativeRect(node);
+    const { fillColor, strokeColor } = this.paintDetails(node);
+    const strokeWidth = node.strokeWeight;
+    const rotation = node.rotation;
+    const x1 = x;
+    const y1 = y;
+    const x2 = x + width;
+    const y2 = y + height;
+    base.push(
+      xmlNode({
+        tag: "line",
+        attrs: {
+          x1: `${x1}`,
+          y1: `${y1}`,
+          x2: `${x2}`,
+          y2: `${y2}`,
+          ...(fillColor ? { fill: fillColor } : {}),
+          ...(strokeColor ? { stroke: strokeColor } : {}),
+          "stroke-width": `${strokeWidth}`,
+          transform: `rotate(${rotation}, ${x1}, ${y1})`,
+        },
+        children: [xmlNode({ tag: "title", children: [node.name] })],
+      })
+    );
     return base;
   }
 
   polygon(base: string[], node: PolygonNode): string[] {
+    const { x, y } = this.relativeRect(node);
+    const { fillColor, strokeColor } = this.paintDetails(node);
+    const strokeWidth = node.strokeWeight;
+    const rotation = node.rotation;
+    const borderRadius =
+      typeof node.cornerRadius === "number" ? node.cornerRadius : 0;
+    const pointCount = node.pointCount;
+    const vertices: Offset[] = [];
+    for (let i = 1; i <= pointCount; i++) {
+      vertices.push({
+        x: Math.sin((2 * Math.PI * i) / i),
+        y: Math.cos((2 * Math.PI * i) / i),
+      });
+    }
+    const points =
+      "0," +
+      vertices
+        .map((vertex) => {
+          const x = (vertex.x * node.width) / 2 + node.width / 2;
+          const y = (vertex.y * node.height) / 2 + node.height / 2;
+          return `${x} ${y}`;
+        })
+        .join(",") +
+      ",0";
+    base.push(
+      xmlNode({
+        tag: "polygon",
+        attrs: {
+          points: points,
+          ...(fillColor ? { fill: fillColor } : {}),
+          ...(strokeColor ? { stroke: strokeColor } : {}),
+          "stroke-width": `${strokeWidth}`,
+          transform: `rotate(${rotation}, ${x}, ${y})`,
+          rx: `${borderRadius}`,
+          ry: `${borderRadius}`,
+        },
+        children: [xmlNode({ tag: "title", children: [node.name] })],
+      })
+    );
     return base;
   }
 
