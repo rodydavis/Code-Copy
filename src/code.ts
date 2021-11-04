@@ -1,11 +1,13 @@
-import { exportCode, ExportTarget } from "./export";
+import { BaseExporter } from "./exporters/base";
+import { SVGExporter } from "./exporters/svg";
+import { ExportTarget } from "./exporters/utils";
 
 figma.showUI(__html__, {
   width: 700,
   height: 500,
 });
 
-let exportType = ExportTarget.Canvas;
+let exportType = ExportTarget.SVG;
 
 figma.ui.onmessage = (msg) => {
   if (msg.type === "export-type") {
@@ -25,6 +27,13 @@ refresh();
 figma.on("selectionchange", () => refresh());
 
 function refresh() {
-  const code = exportCode(exportType);
+  let exporter: BaseExporter<any> = new SVGExporter();
+  switch (exportType) {
+    case ExportTarget.SVG:
+      exporter = new SVGExporter();
+      break;
+  }
+  const nodes = figma.currentPage.selection || [];
+  const code = exporter.export([], nodes);
   setCode(code);
 }

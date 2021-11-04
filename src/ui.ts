@@ -8,23 +8,17 @@ import "codemirror/mode/javascript/javascript";
 import "codemirror/mode/xml/xml";
 import "codemirror/mode/css/css";
 import { TabBar } from "@material/mwc-tab-bar";
-import { ExportTarget } from "./export";
+import { ExportTarget } from "./exporters/utils";
 
 const editorElem = document.getElementById("editor") as HTMLDivElement;
 const exportTarget = document.getElementById("tabs") as TabBar;
 exportTarget.addEventListener("MDCTabBar:activated", (e) => {
   const event = e as CustomEvent;
   const tab = event.detail.index as number;
-  let value = ExportTarget.Canvas;
-  if (tab === 1) {
+  let value = ExportTarget.SVG;
+  if (tab === 0) {
     value = ExportTarget.SVG;
-  } else {
-    value = ExportTarget.Canvas;
-  }
-  if (value === "svg") {
     editor.setOption("mode", "xml");
-  } else if (value === "canvas") {
-    editor.setOption("mode", "javascript");
   }
   parent.postMessage({ pluginMessage: { type: "export-type", value } }, "*");
 });
@@ -33,6 +27,7 @@ const editor = CodeMirror.fromTextArea(editorElem, {
   theme: "material",
   lineNumbers: true,
   readonly: true,
+  lineWrapping: true,
 });
 
 editor.setSize("100%", "100%");
