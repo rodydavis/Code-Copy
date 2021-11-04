@@ -55,7 +55,7 @@ export class SVGExporter extends BaseExporter<XmlNode> {
         "stroke-width": `${strokeWidth}`,
         rx: `${borderRadius}`,
         ry: `${borderRadius}`,
-        transform: `rotate(${rotation} ${info.x} ${info.y})`,
+        transform: `rotate(${rotation * -1} ${info.x} ${info.y})`,
       },
       children: [title(node.name)],
     });
@@ -74,6 +74,7 @@ export class SVGExporter extends BaseExporter<XmlNode> {
     const rx = info.width / 2;
     const ry = info.height / 2;
     const strokeWidth = node.strokeWeight;
+    //  <ellipse cx="91" cy="65" rx="91" ry="65" fill="#C92121" />
     base.children.push({
       tag: "ellipse",
       attrs: {
@@ -83,7 +84,7 @@ export class SVGExporter extends BaseExporter<XmlNode> {
         rx: `${rx}`,
         ry: `${ry}`,
         "stroke-width": `${strokeWidth}`,
-        transform: `rotate(${rotation} ${cx} ${cy})`,
+        transform: `rotate(${rotation * -1} ${cx} ${cy})`,
       },
       children: [title(node.name)],
     });
@@ -136,7 +137,7 @@ export class SVGExporter extends BaseExporter<XmlNode> {
         "font-size": `${fontSize}`,
         "font-family": `${fontFamily}`,
         "font-style": `${fontStyle}`,
-        transform: `rotate(${rotation} ${info.x} ${info.y})`,
+        transform: `rotate(${rotation * -1} ${info.x} ${info.y})`,
       },
       children: [textData],
     });
@@ -161,7 +162,7 @@ export class SVGExporter extends BaseExporter<XmlNode> {
         x2: `${x2}`,
         y2: `${y2}`,
         "stroke-width": `${strokeWidth}`,
-        transform: `rotate(${rotation}, ${x1}, ${y1})`,
+        transform: `rotate(${rotation * -1}, ${x1}, ${y1})`,
       },
       children: [title(node.name)],
     });
@@ -206,7 +207,7 @@ export class SVGExporter extends BaseExporter<XmlNode> {
 
         rx: `${borderRadius}`,
         ry: `${borderRadius}`,
-        transform: `rotate(${rotation}, ${info.x}, ${info.y})`,
+        transform: `rotate(${rotation * -1}, ${info.x}, ${info.y})`,
       },
       children: [title(node.name)],
     });
@@ -215,7 +216,6 @@ export class SVGExporter extends BaseExporter<XmlNode> {
 
   star(base: XmlNode, node: StarNode, info: Rect & PaintDetails): XmlNode {
     base.children ??= [];
-    const { fillColor, strokeColor } = this.paintDetails(node);
     const pointCount = node.pointCount;
     const innerRadius = node.innerRadius;
     const strokeWidth = node.strokeWeight;
@@ -233,11 +233,10 @@ export class SVGExporter extends BaseExporter<XmlNode> {
       tag: "polygon",
       attrs: {
         ...geometryAttrs(info),
+        ...paintAttrs(info),
         points: points,
-        ...(fillColor ? { fill: fillColor } : {}),
-        ...(strokeColor ? { stroke: strokeColor } : {}),
         "stroke-width": `${strokeWidth}`,
-        transform: `rotate(${rotation}, ${info.x}, ${info.y})`,
+        transform: `rotate(${rotation * -1}, ${info.x}, ${info.y})`,
       },
       children: [title(node.name)],
     });

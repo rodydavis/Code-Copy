@@ -15,27 +15,46 @@ export abstract class BaseExporter<T> {
   abstract create(): T;
 
   export(nodes: readonly SceneNode[]): string {
+    let selectionWidth = 0;
+    let selectionHeight = 0;
+    let topX = 0;
+    let topY = 0;
+    if (nodes.length > 0) {
+      if (nodes.length === 1) {
+        const first = nodes[0];
+        selectionWidth = first.width;
+        selectionHeight = first.height;
+        topX = first.x;
+        topY = first.y;
+      } else {
+        topX = nodes.reduce((acc, node) => {
+          return Math.min(acc, node.x);
+        }, nodes[0].x || 0);
+        topY = nodes.reduce((acc, node) => {
+          return Math.min(acc, node.y);
+        }, nodes[0].y || 0);
+        for (const node of nodes) {
+          const relativeX = node.x - this.offset.x;
+          const relativeY = node.y - this.offset.y;
+          selectionWidth = Math.max(selectionWidth, relativeX + node.width);
+          selectionHeight = Math.max(selectionHeight, relativeY + node.height);
+        }
+      }
+    }
+    this.offset = {
+      x: topX,
+      y: topY,
+    };
+    this.size = {
+      width: selectionWidth,
+      height: selectionHeight,
+    };
     const base = this.create();
-    return this.save(this.selection(base, nodes));
+    const result = this.selection(base, nodes);
+    return this.save(result);
   }
 
   selection(base: T, nodes: readonly SceneNode[]): T {
-    if (nodes.length > 0) {
-      this.offset.x = nodes.reduce((acc, node) => {
-        return Math.min(acc, node.x);
-      }, nodes[0].x);
-      this.offset.y = nodes.reduce((acc, node) => {
-        return Math.min(acc, node.y);
-      }, nodes[0].y);
-
-      for (const node of nodes) {
-        const relativeX = node.x - this.offset.x;
-        const relativeY = node.y - this.offset.y;
-        this.size.width = Math.max(this.size.width, relativeX + node.width);
-        this.size.height = Math.max(this.size.height, relativeY + node.height);
-      }
-    }
-
     base = this.before(base);
     for (const node of nodes) {
       base = this.sceneNode(base, node);

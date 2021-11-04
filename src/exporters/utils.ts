@@ -18,11 +18,11 @@ export function xmlNode(
       sb.push(`${indentStr} ${key}="${node.attrs[key]}"`);
     }
   }
-  sb[sb.length - 1] += ">";
   if (node.children) {
     if (node.children.length === 1 && typeof node.children[0] === "string") {
-      sb[sb.length - 1] += node.children[0];
+      sb[sb.length - 1] += ">" + node.children[0];
     } else {
+      sb.push(`${indentStr}>`);
       for (const child of node.children) {
         if (typeof child === "string") {
           sb.push(`${indentStr}  ${child}`);
