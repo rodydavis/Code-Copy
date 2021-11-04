@@ -1,8 +1,6 @@
 import { figmaToHex } from "./utils";
 
 export abstract class BaseExporter<T> {
-  abstract get name(): string;
-  abstract get mode(): string;
   size: Size = {
     width: 0,
     height: 0,

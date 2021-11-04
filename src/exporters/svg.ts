@@ -2,14 +2,6 @@ import { BaseExporter, Offset } from "./base";
 import { formatXml, xmlNode } from "./utils";
 
 export class SVGExporter extends BaseExporter<string[]> {
-  get name(): string {
-    return "SVG";
-  }
-
-  get mode(): string {
-    return "xml";
-  }
-
   save(base: string[]): string {
     const raw = base.join("\n");
     const formatted = formatXml(raw);
