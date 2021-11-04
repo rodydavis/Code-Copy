@@ -67,7 +67,7 @@ export class SVGExporter extends BaseExporter<string[]> {
           ry: `${borderRadius}`,
           transform: `rotate(${rotation} ${x} ${y})`,
         },
-        children: [xmlNode({ tag: "title", children: [node.name] })],
+        children: [title(node.name)],
       })
     );
     return base;
@@ -95,7 +95,7 @@ export class SVGExporter extends BaseExporter<string[]> {
           "stroke-width": `${strokeWidth}`,
           transform: `rotate(${rotation} ${cx} ${cy})`,
         },
-        children: [xmlNode({ tag: "title", children: [node.name] })],
+        children: [title(node.name)],
       })
     );
     return base;
@@ -132,6 +132,10 @@ export class SVGExporter extends BaseExporter<string[]> {
       default:
         break;
     }
+
+    // const paragraphIndent: number = node.paragraphIndent;
+    // const paragraphSpacing: number = node.paragraphSpacing;
+    // const autoRename: boolean = node.autoRename;
 
     base.push(
       xmlNode({
@@ -180,14 +184,14 @@ export class SVGExporter extends BaseExporter<string[]> {
           "stroke-width": `${strokeWidth}`,
           transform: `rotate(${rotation}, ${x1}, ${y1})`,
         },
-        children: [xmlNode({ tag: "title", children: [node.name] })],
+        children: [title(node.name)],
       })
     );
     return base;
   }
 
   polygon(base: string[], node: PolygonNode): string[] {
-    const { x, y } = this.relativeRect(node);
+    const { x, y, width, height } = this.relativeRect(node);
     const { fillColor, strokeColor } = this.paintDetails(node);
     const strokeWidth = node.strokeWeight;
     const rotation = node.rotation;
@@ -205,8 +209,8 @@ export class SVGExporter extends BaseExporter<string[]> {
       "0," +
       vertices
         .map((vertex) => {
-          const x = (vertex.x * node.width) / 2 + node.width / 2;
-          const y = (vertex.y * node.height) / 2 + node.height / 2;
+          const x = (vertex.x * width) / 2 + width / 2;
+          const y = (vertex.y * height) / 2 + height / 2;
           return `${x} ${y}`;
         })
         .join(",") +
@@ -223,13 +227,41 @@ export class SVGExporter extends BaseExporter<string[]> {
           rx: `${borderRadius}`,
           ry: `${borderRadius}`,
         },
-        children: [xmlNode({ tag: "title", children: [node.name] })],
+        children: [title(node.name)],
       })
     );
     return base;
   }
 
   star(base: string[], node: StarNode): string[] {
+    const { x, y } = this.relativeRect(node);
+    const { fillColor, strokeColor } = this.paintDetails(node);
+    const pointCount = node.pointCount;
+    const innerRadius = node.innerRadius;
+    const strokeWidth = node.strokeWeight;
+    const rotation = node.rotation;
+    const points =
+      "0," +
+      Array.from({ length: pointCount }, (_, i) => {
+        const angle = (2 * Math.PI * i) / pointCount;
+        const x = Math.sin(angle) * innerRadius;
+        const y = Math.cos(angle) * innerRadius;
+        return `${x} ${y}`;
+      }).join(",") +
+      ",0";
+    base.push(
+      xmlNode({
+        tag: "polygon",
+        attrs: {
+          points: points,
+          ...(fillColor ? { fill: fillColor } : {}),
+          ...(strokeColor ? { stroke: strokeColor } : {}),
+          "stroke-width": `${strokeWidth}`,
+          transform: `rotate(${rotation}, ${x}, ${y})`,
+        },
+        children: [title(node.name)],
+      })
+    );
     return base;
   }
 
@@ -284,4 +316,8 @@ export class SVGExporter extends BaseExporter<string[]> {
   sticky(base: string[], node: StickyNode): string[] {
     return base;
   }
+}
+
+function title(value: string) {
+  return xmlNode({ tag: "title", children: [value] });
 }
