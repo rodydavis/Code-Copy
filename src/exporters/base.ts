@@ -12,7 +12,10 @@ export abstract class BaseExporter<T> {
 
   abstract save(base: T): string;
 
-  export(base: T, nodes: readonly SceneNode[]): string {
+  abstract create(): T;
+
+  export(nodes: readonly SceneNode[]): string {
+    const base = this.create();
     return this.save(this.selection(base, nodes));
   }
 
@@ -52,71 +55,136 @@ export abstract class BaseExporter<T> {
   sceneNode(base: T, node: SceneNode) {
     console.log(node.type);
     this.comment(base, node.name);
-    const info = this.relativeRect(node);
     switch (node.type) {
       case "SLICE":
-        return this.slice(base, node, info);
+        return this.slice(base, node, {
+          ...this.relativeRect(node),
+        });
       case "FRAME":
-        return this.frame(base, node, info);
+        return this.frame(base, node, {
+          ...this.relativeRect(node),
+          ...this.paintDetails(node),
+        });
       case "GROUP":
-        return this.group(base, node, info);
+        return this.group(base, node, {
+          ...this.relativeRect(node),
+        });
       case "COMPONENT_SET":
-        return this.componentSet(base, node, info);
+        return this.componentSet(base, node, {
+          ...this.relativeRect(node),
+          ...this.paintDetails(node),
+        });
       case "COMPONENT":
-        return this.component(base, node, info);
+        return this.component(base, node, {
+          ...this.relativeRect(node),
+          ...this.paintDetails(node),
+        });
       case "INSTANCE":
-        return this.instance(base, node, info);
+        return this.instance(base, node, {
+          ...this.relativeRect(node),
+          ...this.paintDetails(node),
+        });
       case "BOOLEAN_OPERATION":
-        return this.booleanOperation(base, node, info);
+        return this.booleanOperation(base, node, {
+          ...this.relativeRect(node),
+          ...this.paintDetails(node),
+        });
       case "VECTOR":
-        return this.vector(base, node, info);
+        return this.vector(base, node, {
+          ...this.relativeRect(node),
+          ...this.paintDetails(node),
+        });
       case "STAR":
-        return this.star(base, node, info);
+        return this.star(base, node, {
+          ...this.relativeRect(node),
+          ...this.paintDetails(node),
+        });
       case "POLYGON":
-        return this.polygon(base, node, info);
+        return this.polygon(base, node, {
+          ...this.relativeRect(node),
+          ...this.paintDetails(node),
+        });
       case "LINE":
-        return this.line(base, node, info);
+        return this.line(base, node, {
+          ...this.relativeRect(node),
+          ...this.paintDetails(node),
+        });
       case "TEXT":
-        return this.text(base, node, info);
+        return this.text(base, node, {
+          ...this.relativeRect(node),
+          ...this.paintDetails(node),
+        });
       case "STICKY":
-        return this.sticky(base, node, info);
+        return this.sticky(base, node, {
+          ...this.relativeRect(node),
+        });
       case "CONNECTOR":
-        return this.connector(base, node, info);
+        return this.connector(base, node, {
+          ...this.relativeRect(node),
+        });
       case "SHAPE_WITH_TEXT":
-        return this.shapeWithText(base, node, info);
+        return this.shapeWithText(base, node, {
+          ...this.relativeRect(node),
+        });
       case "STAMP":
-        return this.stamp(base, node, info);
+        return this.stamp(base, node, {
+          ...this.relativeRect(node),
+        });
       case "WIDGET":
-        return this.widget(base, node, info);
+        return this.widget(base, node, {
+          ...this.relativeRect(node),
+        });
       case "ELLIPSE":
-        return this.ellipse(base, node, info);
+        return this.ellipse(base, node, {
+          ...this.relativeRect(node),
+          ...this.paintDetails(node),
+        });
       case "RECTANGLE":
-        return this.rectangle(base, node, info);
+        return this.rectangle(base, node, {
+          ...this.relativeRect(node),
+          ...this.paintDetails(node),
+        });
       default:
         throw new Error(`Unknown node type ${node}`);
     }
   }
 
   abstract comment(base: T, value: string): T;
-  abstract rectangle(base: T, node: RectangleNode, info: Rect): T;
-  abstract ellipse(base: T, node: EllipseNode, info: Rect): T;
-  abstract line(base: T, node: LineNode, info: Rect): T;
-  abstract polygon(base: T, node: PolygonNode, info: Rect): T;
-  abstract star(base: T, node: StarNode, info: Rect): T;
-  abstract vector(base: T, node: VectorNode, info: Rect): T;
+  abstract rectangle(
+    base: T,
+    node: RectangleNode,
+    info: Rect & PaintDetails
+  ): T;
+  abstract ellipse(base: T, node: EllipseNode, info: Rect & PaintDetails): T;
+  abstract line(base: T, node: LineNode, info: Rect & PaintDetails): T;
+  abstract polygon(base: T, node: PolygonNode, info: Rect & PaintDetails): T;
+  abstract star(
+    base: T,
+    node: StarNode,
+    info: Rect & PaintDetails & PaintDetails
+  ): T;
+  abstract vector(base: T, node: VectorNode, info: Rect & PaintDetails): T;
   abstract booleanOperation(base: T, node: BooleanOperationNode, info: Rect): T;
-  abstract component(base: T, node: ComponentNode, info: Rect): T;
-  abstract instance(base: T, node: InstanceNode, info: Rect): T;
+  abstract component(
+    base: T,
+    node: ComponentNode,
+    info: Rect & PaintDetails
+  ): T;
+  abstract instance(base: T, node: InstanceNode, info: Rect & PaintDetails): T;
   abstract group(base: T, node: GroupNode, info: Rect): T;
-  abstract frame(base: T, node: FrameNode, info: Rect): T;
+  abstract frame(base: T, node: FrameNode, info: Rect & PaintDetails): T;
   abstract slice(base: T, node: SliceNode, info: Rect): T;
-  abstract componentSet(base: T, node: ComponentSetNode, info: Rect): T;
+  abstract componentSet(
+    base: T,
+    node: ComponentSetNode,
+    info: Rect & PaintDetails
+  ): T;
   abstract connector(base: T, node: ConnectorNode, info: Rect): T;
   abstract shapeWithText(base: T, node: ShapeWithTextNode, info: Rect): T;
   abstract stamp(base: T, node: StampNode, info: Rect): T;
   abstract widget(base: T, node: WidgetNode, info: Rect): T;
-  abstract text(base: T, node: TextNode, info: Rect): T;
-  abstract sticky(base: T, node: StickyNode, info: Rect): T;
+  abstract text(base: T, node: TextNode, info: Rect & PaintDetails): T;
+  abstract sticky(base: T, node: StickyNode, info: Rect & PaintDetails): T;
 
   rect(node: SceneNode): Rect {
     return {
@@ -187,7 +255,7 @@ export interface Rotation {
   angle: number;
 }
 
-interface PaintDetails {
+export interface PaintDetails {
   fillColor?: string;
   strokeColor?: string;
 }

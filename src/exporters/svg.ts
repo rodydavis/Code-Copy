@@ -1,40 +1,27 @@
-import { BaseExporter, Offset } from "./base";
-import { formatXml, XmlNode, xmlNode } from "./utils";
+import { BaseExporter, Offset, PaintDetails } from "./base";
+import { XmlNode, xmlNode } from "./utils";
 
 export class SVGExporter extends BaseExporter<XmlNode> {
+  create(): XmlNode {
+    return {
+      tag: "svg",
+      attrs: {
+        xmlns: "http://www.w3.org/2000/svg",
+        viewbox: `0 0 ${this.size.width} ${this.size.height}`,
+      },
+      children: [],
+    };
+  }
+
   save(base: XmlNode): string {
     const raw = xmlNode(base);
-    const formatted = formatXml(raw);
-    return formatted;
+    // const formatted = formatXml(raw);
+    return raw.join("\n");
   }
 
   title(base: XmlNode, value: string): XmlNode {
     base.children ??= [];
-    base.children.push(xmlNode({ tag: "title", children: [value] }));
-    return base;
-  }
-
-  before(base: XmlNode): XmlNode {
-    base.children ??= [];
-    base.children.push(
-      xmlNode(
-        {
-          tag: "svg",
-          attrs: {
-            xmlns: "http://www.w3.org/2000/svg",
-            viewbox: `0 0 ${this.size.width} ${this.size.height}`,
-          },
-        },
-        false
-      )
-    );
-    return base;
-  }
-
-  after(base: XmlNode): XmlNode {
-    base.children ??= [];
-    base.children.push("</svg>");
-    this.newLine(base);
+    base.children.push(title(value));
     return base;
   }
 
@@ -50,65 +37,61 @@ export class SVGExporter extends BaseExporter<XmlNode> {
     return base;
   }
 
-  rectangle(base: XmlNode, node: RectangleNode, info: Rect): XmlNode {
+  rectangle(
+    base: XmlNode,
+    node: RectangleNode,
+    info: Rect & PaintDetails
+  ): XmlNode {
     base.children ??= [];
-    const { fillColor, strokeColor } = this.paintDetails(node);
     const strokeWidth = node.strokeWeight;
     const borderRadius =
       typeof node.cornerRadius === "number" ? node.cornerRadius : 0;
     const rotation = node.rotation;
-    base.children.push(
-      xmlNode({
-        tag: "rect",
-        attrs: {
-          x: `${info.x}`,
-          y: `${info.y}`,
-          width: `${info.width}`,
-          height: `${info.height}`,
-          ...(fillColor ? { fill: fillColor } : {}),
-          ...(strokeColor ? { stroke: strokeColor } : {}),
-          "stroke-width": `${strokeWidth}`,
-          rx: `${borderRadius}`,
-          ry: `${borderRadius}`,
-          transform: `rotate(${rotation} ${info.x} ${info.y})`,
-        },
-        children: [title(node.name)],
-      })
-    );
+    base.children.push({
+      tag: "rect",
+      attrs: {
+        ...geometryAttrs(info),
+        ...paintAttrs(info),
+        "stroke-width": `${strokeWidth}`,
+        rx: `${borderRadius}`,
+        ry: `${borderRadius}`,
+        transform: `rotate(${rotation} ${info.x} ${info.y})`,
+      },
+      children: [title(node.name)],
+    });
     return base;
   }
 
-  ellipse(base: XmlNode, node: EllipseNode, info: Rect): XmlNode {
+  ellipse(
+    base: XmlNode,
+    node: EllipseNode,
+    info: Rect & PaintDetails
+  ): XmlNode {
     base.children ??= [];
-    const { fillColor, strokeColor } = this.paintDetails(node);
     const rotation = node.rotation;
     const cx = info.x + info.width / 2;
     const cy = info.y + info.height / 2;
     const rx = info.width / 2;
     const ry = info.height / 2;
     const strokeWidth = node.strokeWeight;
-    base.children.push(
-      xmlNode({
-        tag: "ellipse",
-        attrs: {
-          cx: `${cx}`,
-          cy: `${cy}`,
-          rx: `${rx}`,
-          ry: `${ry}`,
-          ...(fillColor ? { fill: fillColor } : {}),
-          ...(strokeColor ? { stroke: strokeColor } : {}),
-          "stroke-width": `${strokeWidth}`,
-          transform: `rotate(${rotation} ${cx} ${cy})`,
-        },
-        children: [title(node.name)],
-      })
-    );
+    base.children.push({
+      tag: "ellipse",
+      attrs: {
+        ...paintAttrs(info),
+        cx: `${cx}`,
+        cy: `${cy}`,
+        rx: `${rx}`,
+        ry: `${ry}`,
+        "stroke-width": `${strokeWidth}`,
+        transform: `rotate(${rotation} ${cx} ${cy})`,
+      },
+      children: [title(node.name)],
+    });
     return base;
   }
 
-  text(base: XmlNode, node: TextNode, info: Rect): XmlNode {
+  text(base: XmlNode, node: TextNode, info: Rect & PaintDetails): XmlNode {
     base.children ??= [];
-    const { fillColor, strokeColor } = this.paintDetails(node);
     const rotation = node.rotation;
     const textAlign = node.textAlignHorizontal;
     const textBaseline = node.textAlignVertical;
@@ -142,62 +125,55 @@ export class SVGExporter extends BaseExporter<XmlNode> {
     // const paragraphSpacing: number = node.paragraphSpacing;
     // const autoRename: boolean = node.autoRename;
 
-    base.children.push(
-      xmlNode({
-        tag: "text",
-        attrs: {
-          x: `${info.x}`,
-          y: `${info.y}`,
-          width: `${info.width}`,
-          height: `${info.height}`,
-          ...(fillColor ? { fill: fillColor } : {}),
-          ...(strokeColor ? { stroke: strokeColor } : {}),
-          "stroke-width": `${strokeWidth}`,
-          "text-anchor": `${textAlign}`,
-          "dominant-baseline": `${textBaseline}`,
-          "font-size": `${fontSize}`,
-          "font-family": `${fontFamily}`,
-          "font-style": `${fontStyle}`,
-          transform: `rotate(${rotation} ${info.x} ${info.y})`,
-        },
-        children: [textData],
-      })
-    );
+    base.children.push({
+      tag: "text",
+      attrs: {
+        ...geometryAttrs(info),
+        ...paintAttrs(info),
+        "stroke-width": `${strokeWidth}`,
+        "text-anchor": `${textAlign}`,
+        "dominant-baseline": `${textBaseline}`,
+        "font-size": `${fontSize}`,
+        "font-family": `${fontFamily}`,
+        "font-style": `${fontStyle}`,
+        transform: `rotate(${rotation} ${info.x} ${info.y})`,
+      },
+      children: [textData],
+    });
 
     return base;
   }
 
-  line(base: XmlNode, node: LineNode, info: Rect): XmlNode {
+  line(base: XmlNode, node: LineNode, info: Rect & PaintDetails): XmlNode {
     base.children ??= [];
-    const { fillColor, strokeColor } = this.paintDetails(node);
     const strokeWidth = node.strokeWeight;
     const rotation = node.rotation;
     const x1 = info.x;
     const y1 = info.y;
     const x2 = info.x + info.width;
     const y2 = info.y + info.height;
-    base.children.push(
-      xmlNode({
-        tag: "line",
-        attrs: {
-          x1: `${x1}`,
-          y1: `${y1}`,
-          x2: `${x2}`,
-          y2: `${y2}`,
-          ...(fillColor ? { fill: fillColor } : {}),
-          ...(strokeColor ? { stroke: strokeColor } : {}),
-          "stroke-width": `${strokeWidth}`,
-          transform: `rotate(${rotation}, ${x1}, ${y1})`,
-        },
-        children: [title(node.name)],
-      })
-    );
+    base.children.push({
+      tag: "line",
+      attrs: {
+        ...paintAttrs(info),
+        x1: `${x1}`,
+        y1: `${y1}`,
+        x2: `${x2}`,
+        y2: `${y2}`,
+        "stroke-width": `${strokeWidth}`,
+        transform: `rotate(${rotation}, ${x1}, ${y1})`,
+      },
+      children: [title(node.name)],
+    });
     return base;
   }
 
-  polygon(base: XmlNode, node: PolygonNode, info: Rect): XmlNode {
+  polygon(
+    base: XmlNode,
+    node: PolygonNode,
+    info: Rect & PaintDetails
+  ): XmlNode {
     base.children ??= [];
-    const { fillColor, strokeColor } = this.paintDetails(node);
     const strokeWidth = node.strokeWeight;
     const rotation = node.rotation;
     const borderRadius =
@@ -220,27 +196,24 @@ export class SVGExporter extends BaseExporter<XmlNode> {
         })
         .join(",") +
       ",0";
-    base.children.push(
-      xmlNode({
-        tag: "polygon",
-        attrs: {
-          points: points,
-          ...(fillColor ? { fill: fillColor } : {}),
-          ...(strokeColor ? { stroke: strokeColor } : {}),
-          "stroke-width": `${strokeWidth}`,
-          x: `${info.x}`,
-          y: `${info.y}`,
-          rx: `${borderRadius}`,
-          ry: `${borderRadius}`,
-          transform: `rotate(${rotation}, ${info.x}, ${info.y})`,
-        },
-        children: [title(node.name)],
-      })
-    );
+    base.children.push({
+      tag: "polygon",
+      attrs: {
+        ...geometryAttrs(info),
+        ...paintAttrs(info),
+        points: points,
+        "stroke-width": `${strokeWidth}`,
+
+        rx: `${borderRadius}`,
+        ry: `${borderRadius}`,
+        transform: `rotate(${rotation}, ${info.x}, ${info.y})`,
+      },
+      children: [title(node.name)],
+    });
     return base;
   }
 
-  star(base: XmlNode, node: StarNode, info: Rect): XmlNode {
+  star(base: XmlNode, node: StarNode, info: Rect & PaintDetails): XmlNode {
     base.children ??= [];
     const { fillColor, strokeColor } = this.paintDetails(node);
     const pointCount = node.pointCount;
@@ -256,21 +229,18 @@ export class SVGExporter extends BaseExporter<XmlNode> {
         return `${x} ${y}`;
       }).join(",") +
       ",0";
-    base.children.push(
-      xmlNode({
-        tag: "polygon",
-        attrs: {
-          points: points,
-          ...(fillColor ? { fill: fillColor } : {}),
-          ...(strokeColor ? { stroke: strokeColor } : {}),
-          "stroke-width": `${strokeWidth}`,
-          transform: `rotate(${rotation}, ${info.x}, ${info.y})`,
-          x: `${info.x}`,
-          y: `${info.y}`,
-        },
-        children: [title(node.name)],
-      })
-    );
+    base.children.push({
+      tag: "polygon",
+      attrs: {
+        ...geometryAttrs(info),
+        points: points,
+        ...(fillColor ? { fill: fillColor } : {}),
+        ...(strokeColor ? { stroke: strokeColor } : {}),
+        "stroke-width": `${strokeWidth}`,
+        transform: `rotate(${rotation}, ${info.x}, ${info.y})`,
+      },
+      children: [title(node.name)],
+    });
     return base;
   }
 
@@ -332,5 +302,21 @@ export class SVGExporter extends BaseExporter<XmlNode> {
 }
 
 function title(value: string) {
-  return xmlNode({ tag: "title", children: [value] });
+  return { tag: "title", children: [value] };
+}
+
+function geometryAttrs(info: Rect): { [key: string]: string } {
+  return {
+    x: `${info.x}`,
+    y: `${info.y}`,
+    width: `${info.width}`,
+    height: `${info.height}`,
+  };
+}
+
+function paintAttrs(info: PaintDetails): { [key: string]: string } {
+  return {
+    ...(info.fillColor ? { fill: info.fillColor } : {}),
+    ...(info.strokeColor ? { stroke: info.strokeColor } : {}),
+  };
 }

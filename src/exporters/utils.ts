@@ -5,30 +5,48 @@ export interface XmlNode {
   children?: PossibleNode[];
 }
 
-export function xmlNode(node: XmlNode, autoClose: boolean = true) {
-  let result = `<${node.tag}`;
+export function xmlNode(
+  node: XmlNode,
+  autoClose: boolean = true,
+  indent: number = 0
+): string[] {
+  const indentStr = " ".repeat(indent);
+  const sb: string[] = [];
+  sb.push(`${indentStr}<${node.tag}`);
   if (node.attrs) {
-    if (Object.keys(node.attrs).length > 0) {
-      const attrs = Object.keys(node.attrs)
-        .map((key) => `${key}="${node.attrs![key]}"`)
-        .join(" ");
-      result += ` ${attrs}`;
+    for (const key in node.attrs) {
+      sb.push(`${indentStr} ${key}="${node.attrs[key]}"`);
     }
   }
-  result += `>`;
+  sb[sb.length - 1] += ">";
   if (node.children) {
-    for (const child of node.children) {
-      if (typeof child === "string") {
-        result += child;
-      } else {
-        result += xmlNode(child);
+    if (node.children.length === 1 && typeof node.children[0] === "string") {
+      sb[sb.length - 1] += node.children[0];
+    } else {
+      for (const child of node.children) {
+        if (typeof child === "string") {
+          sb.push(`${indentStr}  ${child}`);
+        } else {
+          const lines = xmlNode(child, autoClose, indent + 1);
+          sb.push(...lines.map((line) => `${indentStr}  ${line}`));
+        }
       }
     }
+    if (autoClose) {
+      if (node.children.length === 1 && typeof node.children[0] === "string") {
+        sb[sb.length - 1] += `</${node.tag}>`;
+      } else {
+        sb.push(`${indentStr}</${node.tag}>`);
+      }
+    }
+  } else {
+    if (autoClose) {
+      sb.push(`${indentStr}/>`);
+    } else {
+      sb.push(`${indentStr}>`);
+    }
   }
-  if (autoClose) {
-    result += `</${node.tag}>`;
-  }
-  return result;
+  return sb;
 }
 
 export function formatXml(xml: string, tab?: string): string {

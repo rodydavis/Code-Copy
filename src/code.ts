@@ -34,6 +34,6 @@ function refresh() {
       break;
   }
   const nodes = figma.currentPage.selection || [];
-  const code = exporter.export([], nodes);
+  const code = exporter.export(nodes);
   setCode(code);
 }
