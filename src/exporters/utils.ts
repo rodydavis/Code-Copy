@@ -49,18 +49,6 @@ export function xmlNode(
   return sb;
 }
 
-export function formatXml(xml: string, tab?: string): string {
-  let formatted = "",
-    indent = "";
-  tab = tab || "\t";
-  xml.split(/>\s*</).forEach(function (node) {
-    if (node.match(/^\/\w/)) indent = indent.substring(tab!.length); // decrease indent by one 'tab'
-    formatted += indent + "<" + node + ">\r\n";
-    if (node.match(/^<?\w[^>]*[^\/]$/)) indent += tab; // increase indent
-  });
-  return formatted.substring(1, formatted.length - 3);
-}
-
 export function figmaToHex(rgb: RGB) {
   const red = Math.round(rgb.r * 255);
   const green = Math.round(rgb.g * 255);

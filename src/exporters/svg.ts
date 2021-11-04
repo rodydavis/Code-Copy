@@ -15,7 +15,6 @@ export class SVGExporter extends BaseExporter<XmlNode> {
 
   save(base: XmlNode): string {
     const raw = xmlNode(base);
-    // const formatted = formatXml(raw);
     return raw.join("\n");
   }
 
@@ -74,7 +73,6 @@ export class SVGExporter extends BaseExporter<XmlNode> {
     const rx = info.width / 2;
     const ry = info.height / 2;
     const strokeWidth = node.strokeWeight;
-    //  <ellipse cx="91" cy="65" rx="91" ry="65" fill="#C92121" />
     base.children.push({
       tag: "ellipse",
       attrs: {
