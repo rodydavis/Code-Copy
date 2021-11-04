@@ -52,70 +52,71 @@ export abstract class BaseExporter<T> {
   sceneNode(base: T, node: SceneNode) {
     console.log(node.type);
     this.comment(base, node.name);
+    const info = this.relativeRect(node);
     switch (node.type) {
       case "SLICE":
-        return this.slice(base, node);
+        return this.slice(base, node, info);
       case "FRAME":
-        return this.frame(base, node);
+        return this.frame(base, node, info);
       case "GROUP":
-        return this.group(base, node);
+        return this.group(base, node, info);
       case "COMPONENT_SET":
-        return this.componentSet(base, node);
+        return this.componentSet(base, node, info);
       case "COMPONENT":
-        return this.component(base, node);
+        return this.component(base, node, info);
       case "INSTANCE":
-        return this.instance(base, node);
+        return this.instance(base, node, info);
       case "BOOLEAN_OPERATION":
-        return this.booleanOperation(base, node);
+        return this.booleanOperation(base, node, info);
       case "VECTOR":
-        return this.vector(base, node);
+        return this.vector(base, node, info);
       case "STAR":
-        return this.star(base, node);
+        return this.star(base, node, info);
       case "POLYGON":
-        return this.polygon(base, node);
+        return this.polygon(base, node, info);
       case "LINE":
-        return this.line(base, node);
+        return this.line(base, node, info);
       case "TEXT":
-        return this.text(base, node);
+        return this.text(base, node, info);
       case "STICKY":
-        return this.sticky(base, node);
+        return this.sticky(base, node, info);
       case "CONNECTOR":
-        return this.connector(base, node);
+        return this.connector(base, node, info);
       case "SHAPE_WITH_TEXT":
-        return this.shapeWithText(base, node);
+        return this.shapeWithText(base, node, info);
       case "STAMP":
-        return this.stamp(base, node);
+        return this.stamp(base, node, info);
       case "WIDGET":
-        return this.widget(base, node);
+        return this.widget(base, node, info);
       case "ELLIPSE":
-        return this.ellipse(base, node);
+        return this.ellipse(base, node, info);
       case "RECTANGLE":
-        return this.rectangle(base, node);
+        return this.rectangle(base, node, info);
       default:
         throw new Error(`Unknown node type ${node}`);
     }
   }
 
   abstract comment(base: T, value: string): T;
-  abstract rectangle(base: T, node: RectangleNode): T;
-  abstract ellipse(base: T, node: EllipseNode): T;
-  abstract line(base: T, node: LineNode): T;
-  abstract polygon(base: T, node: PolygonNode): T;
-  abstract star(base: T, node: StarNode): T;
-  abstract vector(base: T, node: VectorNode): T;
-  abstract booleanOperation(base: T, node: BooleanOperationNode): T;
-  abstract component(base: T, node: ComponentNode): T;
-  abstract instance(base: T, node: InstanceNode): T;
-  abstract group(base: T, node: GroupNode): T;
-  abstract frame(base: T, node: FrameNode): T;
-  abstract slice(base: T, node: SliceNode): T;
-  abstract componentSet(base: T, node: ComponentSetNode): T;
-  abstract connector(base: T, node: ConnectorNode): T;
-  abstract shapeWithText(base: T, node: ShapeWithTextNode): T;
-  abstract stamp(base: T, node: StampNode): T;
-  abstract widget(base: T, node: WidgetNode): T;
-  abstract text(base: T, node: TextNode): T;
-  abstract sticky(base: T, node: StickyNode): T;
+  abstract rectangle(base: T, node: RectangleNode, info: Rect): T;
+  abstract ellipse(base: T, node: EllipseNode, info: Rect): T;
+  abstract line(base: T, node: LineNode, info: Rect): T;
+  abstract polygon(base: T, node: PolygonNode, info: Rect): T;
+  abstract star(base: T, node: StarNode, info: Rect): T;
+  abstract vector(base: T, node: VectorNode, info: Rect): T;
+  abstract booleanOperation(base: T, node: BooleanOperationNode, info: Rect): T;
+  abstract component(base: T, node: ComponentNode, info: Rect): T;
+  abstract instance(base: T, node: InstanceNode, info: Rect): T;
+  abstract group(base: T, node: GroupNode, info: Rect): T;
+  abstract frame(base: T, node: FrameNode, info: Rect): T;
+  abstract slice(base: T, node: SliceNode, info: Rect): T;
+  abstract componentSet(base: T, node: ComponentSetNode, info: Rect): T;
+  abstract connector(base: T, node: ConnectorNode, info: Rect): T;
+  abstract shapeWithText(base: T, node: ShapeWithTextNode, info: Rect): T;
+  abstract stamp(base: T, node: StampNode, info: Rect): T;
+  abstract widget(base: T, node: WidgetNode, info: Rect): T;
+  abstract text(base: T, node: TextNode, info: Rect): T;
+  abstract sticky(base: T, node: StickyNode, info: Rect): T;
 
   rect(node: SceneNode): Rect {
     return {
@@ -181,6 +182,10 @@ export interface Size {
 }
 
 export type Rect = Offset & Size;
+
+export interface Rotation {
+  angle: number;
+}
 
 interface PaintDetails {
   fillColor?: string;
