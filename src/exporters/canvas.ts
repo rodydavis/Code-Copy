@@ -181,6 +181,43 @@ export class CanvasExport extends BaseExporter<string[]> {
     node: TextNode,
     info: Offset & Size & PaintDetails
   ): string[] {
+    const textAlign = node.textAlignHorizontal.toLowerCase();
+    const textBaseline = node.textAlignVertical.toLowerCase();
+    const fontSize = typeof node.fontSize === "number" ? node.fontSize : 12;
+    let fontFamily = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+    let fontStyle = "normal";
+    if (Object(node.fontName).hasOwnProperty("family")) {
+      const family = node.fontName as FontName;
+      fontFamily = family.family;
+      fontStyle = family.style;
+    }
+    const strokeWidth = node.strokeWeight;
+    let textData = node.characters;
+    const textCase =
+      typeof node.textCase === "string" ? node.textCase : "ORIGINAL";
+    switch (textCase) {
+      case "UPPER":
+        textData = textData.toUpperCase();
+        break;
+      case "LOWER":
+        textData = textData.toLowerCase();
+        break;
+      case "TITLE":
+        textData = textData.replace(/\b\w/g, (l) => l.toUpperCase());
+        break;
+      default:
+        break;
+    }
+    base.push("ctx.save();");
+    paintStyles(base, info);
+    base.push(`ctx.font = "${fontStyle} ${fontSize}px ${fontFamily}";`);
+    base.push(`ctx.textAlign = "${textAlign}";`);
+    base.push(`ctx.textBaseline = "${textBaseline}";`);
+    base.push(`ctx.fillText("${textData}", ${info.x}, ${info.y});`);
+    if (strokeWidth > 0) {
+      base.push(`ctx.strokeText("${textData}", ${info.x}, ${info.y});`);
+    }
+    base.push("ctx.restore();");
     return base;
   }
 

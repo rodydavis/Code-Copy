@@ -6,3 +6,8 @@ Figma plugin to copy code in various formats.
 
 - SVG
 - Canvas
+
+## Screenshots
+
+![](/screenshots/svg.png)
+![](/screenshots/canvas.png)
