@@ -1,4 +1,13 @@
-import { BaseExporter, Offset, PaintDetails, Rect, Size } from "./base";
+import {
+  BaseExporter,
+  EllipseDetails,
+  Offset,
+  PaintDetails,
+  PathDetails,
+  Rect,
+  Size,
+  TextDetails,
+} from "./base";
 
 export class CanvasExport extends BaseExporter<string[]> {
   save(base: string[]): string {
@@ -39,15 +48,13 @@ export class CanvasExport extends BaseExporter<string[]> {
   ellipse(
     base: string[],
     node: EllipseNode,
-    info: Offset & Size & PaintDetails
+    info: Offset & Size & PaintDetails & EllipseDetails
   ): string[] {
     base.push("ctx.save();");
     paintStyles(base, info);
     base.push(`ctx.beginPath();`);
     base.push(
-      `ctx.ellipse(${info.x + info.width / 2}, ${info.y + info.height / 2}, ${
-        info.width / 2
-      }, ${info.height / 2}, 0, 0, 2 * Math.PI);`
+      `ctx.ellipse(${info.cx}, ${info.cy}, ${info.rx}, ${info.ry}, 0, 0, 2 * Math.PI);`
     );
     base.push("ctx.fill();");
     base.push("ctx.restore();");
@@ -72,18 +79,15 @@ export class CanvasExport extends BaseExporter<string[]> {
   polygon(
     base: string[],
     node: PolygonNode,
-    info: Offset & Size & PaintDetails
+    info: Offset & Size & PaintDetails & PathDetails
   ): string[] {
     base.push("ctx.save();");
     paintStyles(base, info);
     base.push(`ctx.beginPath();`);
     base.push(`ctx.moveTo(${info.x}, ${info.y});`);
-    const points = node.pointCount;
-    for (let i = 0; i < points; i++) {
-      const angle = (i / points) * 2 * Math.PI;
-      const x = info.x + info.width / 2 + (info.width / 2) * Math.cos(angle);
-      const y = info.y + info.height / 2 + (info.height / 2) * Math.sin(angle);
-      base.push(`ctx.lineTo(${x}, ${y});`);
+    for (let i = 0; i < info.points.length; i++) {
+      const point = info.points[i];
+      base.push(`ctx.lineTo(${point.x}, ${point.y});`);
     }
     base.push("ctx.fill();");
     base.push("ctx.restore();");
@@ -93,19 +97,15 @@ export class CanvasExport extends BaseExporter<string[]> {
   star(
     base: string[],
     node: StarNode,
-    info: Offset & Size & PaintDetails
+    info: Offset & Size & PaintDetails & PathDetails
   ): string[] {
     base.push("ctx.save();");
     paintStyles(base, info);
     base.push(`ctx.beginPath();`);
     base.push(`ctx.moveTo(${info.x}, ${info.y});`);
-    const points = node.pointCount;
-    const innerRadius = node.innerRadius;
-    for (let i = 0; i < points; i++) {
-      const angle = (i / points) * 2 * Math.PI;
-      const x = info.x + Math.sin(angle) * innerRadius;
-      const y = info.y + Math.cos(angle) * innerRadius;
-      base.push(`ctx.lineTo(${x}, ${y});`);
+    for (let i = 0; i < info.points.length; i++) {
+      const point = info.points[i];
+      base.push(`ctx.lineTo(${point.x}, ${point.y});`);
     }
     return base;
   }
@@ -179,43 +179,19 @@ export class CanvasExport extends BaseExporter<string[]> {
   text(
     base: string[],
     node: TextNode,
-    info: Offset & Size & PaintDetails
+    info: Offset & Size & PaintDetails & TextDetails
   ): string[] {
-    const textAlign = node.textAlignHorizontal.toLowerCase();
-    const textBaseline = node.textAlignVertical.toLowerCase();
-    const fontSize = typeof node.fontSize === "number" ? node.fontSize : 12;
-    let fontFamily = '"Helvetica Neue", Helvetica, Arial, sans-serif';
-    let fontStyle = "normal";
-    if (Object(node.fontName).hasOwnProperty("family")) {
-      const family = node.fontName as FontName;
-      fontFamily = family.family;
-      fontStyle = family.style;
-    }
     const strokeWidth = node.strokeWeight;
-    let textData = node.characters;
-    const textCase =
-      typeof node.textCase === "string" ? node.textCase : "ORIGINAL";
-    switch (textCase) {
-      case "UPPER":
-        textData = textData.toUpperCase();
-        break;
-      case "LOWER":
-        textData = textData.toLowerCase();
-        break;
-      case "TITLE":
-        textData = textData.replace(/\b\w/g, (l) => l.toUpperCase());
-        break;
-      default:
-        break;
-    }
     base.push("ctx.save();");
     paintStyles(base, info);
-    base.push(`ctx.font = "${fontStyle} ${fontSize}px ${fontFamily}";`);
-    base.push(`ctx.textAlign = "${textAlign}";`);
-    base.push(`ctx.textBaseline = "${textBaseline}";`);
-    base.push(`ctx.fillText("${textData}", ${info.x}, ${info.y});`);
+    base.push(
+      `ctx.font = "${info.fontStyle} ${info.fontSize}px ${info.fontFamily}";`
+    );
+    base.push(`ctx.textAlign = "${info.textAlign}";`);
+    base.push(`ctx.textBaseline = "${info.textBaseline}";`);
+    base.push(`ctx.fillText("${info.textData}", ${info.x}, ${info.y});`);
     if (strokeWidth > 0) {
-      base.push(`ctx.strokeText("${textData}", ${info.x}, ${info.y});`);
+      base.push(`ctx.strokeText("${info.textData}", ${info.x}, ${info.y});`);
     }
     base.push("ctx.restore();");
     return base;

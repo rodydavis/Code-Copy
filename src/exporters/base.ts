@@ -114,14 +114,41 @@ export abstract class BaseExporter<T> {
           ...this.paintDetails(node),
         });
       case "STAR":
+        const startInfo = this.relativeRect(node);
+        const starPointCount = node.pointCount;
+        const innerRadius = node.innerRadius;
+        const starVertices: Offset[] = [];
+        for (let i = 1; i <= starPointCount; i++) {
+          const angle = (2 * Math.PI * i) / starPointCount;
+          const x = startInfo.x + Math.sin(angle) * innerRadius;
+          const y = startInfo.y + Math.cos(angle) * innerRadius;
+          starVertices.push({ x, y });
+        }
         return this.star(base, node, {
-          ...this.relativeRect(node),
+          ...startInfo,
           ...this.paintDetails(node),
+          points: starVertices,
         });
       case "POLYGON":
+        const polygonInfo = this.relativeRect(node);
+        const polygonPointCount = node.pointCount;
+        const polygonVertices: Offset[] = [];
+        for (let i = 1; i <= polygonPointCount; i++) {
+          const angle = (i / polygonPointCount) * Math.PI * 2;
+          const x =
+            polygonInfo.x +
+            polygonInfo.width / 2 +
+            (Math.cos(angle) * polygonInfo.width) / 2;
+          const y =
+            polygonInfo.y +
+            polygonInfo.height / 2 +
+            (Math.sin(angle) * polygonInfo.height) / 2;
+          polygonVertices.push({ x, y });
+        }
         return this.polygon(base, node, {
-          ...this.relativeRect(node),
+          ...polygonInfo,
           ...this.paintDetails(node),
+          points: polygonVertices,
         });
       case "LINE":
         return this.line(base, node, {
@@ -129,9 +156,45 @@ export abstract class BaseExporter<T> {
           ...this.paintDetails(node),
         });
       case "TEXT":
+        const textAlign = node.textAlignHorizontal.toLowerCase();
+        const textBaseline = node.textAlignVertical.toLowerCase();
+        const fontSize = typeof node.fontSize === "number" ? node.fontSize : 12;
+        let fontFamily = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+        let fontStyle = "normal";
+        if (Object(node.fontName).hasOwnProperty("family")) {
+          const family = node.fontName as FontName;
+          fontFamily = family.family;
+          fontStyle = family.style;
+        }
+        let textData = node.characters;
+        const textCase =
+          typeof node.textCase === "string" ? node.textCase : "ORIGINAL";
+        switch (textCase) {
+          case "UPPER":
+            textData = textData.toUpperCase();
+            break;
+          case "LOWER":
+            textData = textData.toLowerCase();
+            break;
+          case "TITLE":
+            textData = textData.replace(/\b\w/g, (l) => l.toUpperCase());
+            break;
+          default:
+            break;
+        }
+        const paragraphIndent: number = node.paragraphIndent;
+        const paragraphSpacing: number = node.paragraphSpacing;
         return this.text(base, node, {
           ...this.relativeRect(node),
           ...this.paintDetails(node),
+          textAlign,
+          textBaseline,
+          fontSize,
+          fontFamily,
+          fontStyle,
+          textData,
+          paragraphIndent,
+          paragraphSpacing,
         });
       case "STICKY":
         return this.sticky(base, node, {
@@ -154,9 +217,18 @@ export abstract class BaseExporter<T> {
           ...this.relativeRect(node),
         });
       case "ELLIPSE":
+        const ellipseInfo = this.relativeRect(node);
+        const cx = ellipseInfo.x + ellipseInfo.width / 2;
+        const cy = ellipseInfo.y + ellipseInfo.height / 2;
+        const rx = ellipseInfo.width / 2;
+        const ry = ellipseInfo.height / 2;
         return this.ellipse(base, node, {
-          ...this.relativeRect(node),
+          ...ellipseInfo,
           ...this.paintDetails(node),
+          cx,
+          cy,
+          rx,
+          ry,
         });
       case "RECTANGLE":
         return this.rectangle(base, node, {
@@ -174,13 +246,21 @@ export abstract class BaseExporter<T> {
     node: RectangleNode,
     info: Rect & PaintDetails
   ): T;
-  abstract ellipse(base: T, node: EllipseNode, info: Rect & PaintDetails): T;
+  abstract ellipse(
+    base: T,
+    node: EllipseNode,
+    info: Rect & PaintDetails & EllipseDetails
+  ): T;
   abstract line(base: T, node: LineNode, info: Rect & PaintDetails): T;
-  abstract polygon(base: T, node: PolygonNode, info: Rect & PaintDetails): T;
+  abstract polygon(
+    base: T,
+    node: PolygonNode,
+    info: Rect & PaintDetails & PathDetails
+  ): T;
   abstract star(
     base: T,
     node: StarNode,
-    info: Rect & PaintDetails & PaintDetails
+    info: Rect & PaintDetails & PaintDetails & PathDetails
   ): T;
   abstract vector(base: T, node: VectorNode, info: Rect & PaintDetails): T;
   abstract booleanOperation(base: T, node: BooleanOperationNode, info: Rect): T;
@@ -202,7 +282,11 @@ export abstract class BaseExporter<T> {
   abstract shapeWithText(base: T, node: ShapeWithTextNode, info: Rect): T;
   abstract stamp(base: T, node: StampNode, info: Rect): T;
   abstract widget(base: T, node: WidgetNode, info: Rect): T;
-  abstract text(base: T, node: TextNode, info: Rect & PaintDetails): T;
+  abstract text(
+    base: T,
+    node: TextNode,
+    info: Rect & PaintDetails & TextDetails
+  ): T;
   abstract sticky(base: T, node: StickyNode, info: Rect & PaintDetails): T;
 
   rect(node: SceneNode): Rect {
@@ -223,6 +307,19 @@ export abstract class BaseExporter<T> {
       width: node.width,
       height: node.height,
     };
+  }
+
+  pathData(points: Offset[]): string {
+    let path = "";
+    for (let i = 0; i < points.length; i++) {
+      const point = points[i];
+      if (i === 0) {
+        path += `M ${point.x} ${point.y}`;
+      } else {
+        path += ` L ${point.x} ${point.y}`;
+      }
+    }
+    return path;
   }
 
   paintDetails(node: SceneNode & GeometryMixin): PaintDetails {
@@ -277,4 +374,26 @@ export interface Rotation {
 export interface PaintDetails {
   fillColor?: string;
   strokeColor?: string;
+}
+
+export interface TextDetails {
+  textAlign: string;
+  textBaseline: string;
+  fontSize: number;
+  fontFamily: string;
+  fontStyle: string;
+  textData: string;
+  paragraphIndent: number;
+  paragraphSpacing: number;
+}
+
+export interface EllipseDetails {
+  cx: number;
+  cy: number;
+  rx: number;
+  ry: number;
+}
+
+export interface PathDetails {
+  points: Offset[];
 }

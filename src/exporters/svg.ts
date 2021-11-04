@@ -1,4 +1,11 @@
-import { BaseExporter, Offset, PaintDetails } from "./base";
+import {
+  BaseExporter,
+  EllipseDetails,
+  Offset,
+  PaintDetails,
+  PathDetails,
+  TextDetails,
+} from "./base";
 import { PossibleNode, XmlNode, xmlNodeToString } from "./xml";
 
 export class SVGExporter extends BaseExporter<XmlNode> {
@@ -36,21 +43,12 @@ export class SVGExporter extends BaseExporter<XmlNode> {
   ): XmlNode {
     const rotation = node.rotation;
     const strokeWidth = node.strokeWeight;
-    let path = "";
-    for (let i = 0; i < points.length; i++) {
-      const point = points[i];
-      if (i === 0) {
-        path += `M ${point.x} ${point.y}`;
-      } else {
-        path += ` L ${point.x} ${point.y}`;
-      }
-    }
     return nest(base, {
       tag: "path",
       attrs: {
         ...geometryAttrs(info),
         ...paintAttrs(info),
-        d: path,
+        d: this.pathData(points),
         transform: `rotate(${rotation * -1} ${info.x} ${info.y})`,
         "stroke-width": `${strokeWidth}`,
       },
@@ -92,63 +90,32 @@ export class SVGExporter extends BaseExporter<XmlNode> {
   ellipse(
     base: XmlNode,
     node: EllipseNode,
-    info: Rect & PaintDetails
+    info: Rect & PaintDetails & EllipseDetails
   ): XmlNode {
     const rotation = node.rotation;
-    const cx = info.x + info.width / 2;
-    const cy = info.y + info.height / 2;
-    const rx = info.width / 2;
-    const ry = info.height / 2;
     const strokeWidth = node.strokeWeight;
     return nest(base, {
       tag: "ellipse",
       attrs: {
         ...paintAttrs(info),
-        cx: `${cx}`,
-        cy: `${cy}`,
-        rx: `${rx}`,
-        ry: `${ry}`,
+        cx: `${info.cx}`,
+        cy: `${info.cy}`,
+        rx: `${info.rx}`,
+        ry: `${info.ry}`,
         "stroke-width": `${strokeWidth}`,
-        transform: `rotate(${rotation * -1} ${cx} ${cy})`,
+        transform: `rotate(${rotation * -1} ${info.cx} ${info.cy})`,
       },
       children: [title(node.name)],
     });
   }
 
-  text(base: XmlNode, node: TextNode, info: Rect & PaintDetails): XmlNode {
+  text(
+    base: XmlNode,
+    node: TextNode,
+    info: Rect & PaintDetails & TextDetails
+  ): XmlNode {
     const rotation = node.rotation;
-    const textAlign = node.textAlignHorizontal.toLowerCase();
-    const textBaseline = node.textAlignVertical.toLowerCase();
-    const fontSize = typeof node.fontSize === "number" ? node.fontSize : 12;
-    let fontFamily = '"Helvetica Neue", Helvetica, Arial, sans-serif';
-    let fontStyle = "normal";
-    if (Object(node.fontName).hasOwnProperty("family")) {
-      const family = node.fontName as FontName;
-      fontFamily = family.family;
-      fontStyle = family.style;
-    }
     const strokeWidth = node.strokeWeight;
-    let textData = node.characters;
-    const textCase =
-      typeof node.textCase === "string" ? node.textCase : "ORIGINAL";
-    switch (textCase) {
-      case "UPPER":
-        textData = textData.toUpperCase();
-        break;
-      case "LOWER":
-        textData = textData.toLowerCase();
-        break;
-      case "TITLE":
-        textData = textData.replace(/\b\w/g, (l) => l.toUpperCase());
-        break;
-      default:
-        break;
-    }
-
-    // const paragraphIndent: number = node.paragraphIndent;
-    // const paragraphSpacing: number = node.paragraphSpacing;
-    // const autoRename: boolean = node.autoRename;
-
     return nest(base, {
       tag: "text",
       attrs: {
@@ -156,14 +123,14 @@ export class SVGExporter extends BaseExporter<XmlNode> {
         ...paintAttrs(info),
         y: `${info.y + info.height}`,
         "stroke-width": `${strokeWidth}`,
-        "text-anchor": `${textAlign}`,
-        "dominant-baseline": `${textBaseline}`,
-        "font-size": `${fontSize}`,
-        "font-family": `${fontFamily}`,
-        "font-style": `${fontStyle}`,
+        "text-anchor": `${info.textAlign}`,
+        "dominant-baseline": `${info.textBaseline}`,
+        "font-size": `${info.fontSize}`,
+        "font-family": `${info.fontFamily}`,
+        "font-style": `${info.fontStyle}`,
         transform: `rotate(${rotation * -1} ${info.x} ${info.y})`,
       },
-      children: [textData],
+      children: [info.textData],
     });
   }
 
@@ -181,32 +148,19 @@ export class SVGExporter extends BaseExporter<XmlNode> {
   polygon(
     base: XmlNode,
     node: PolygonNode,
-    info: Rect & PaintDetails
+    info: Rect & PaintDetails & PathDetails
   ): XmlNode {
     base.children ??= [];
-    const pointCount = node.pointCount;
-    const vertices: Offset[] = [];
-    for (let i = 1; i <= pointCount; i++) {
-      const angle = (i / pointCount) * Math.PI * 2;
-      const x = info.x + info.width / 2 + (Math.cos(angle) * info.width) / 2;
-      const y = info.y + info.height / 2 + (Math.sin(angle) * info.height) / 2;
-      vertices.push({ x, y });
-    }
-    return this.path(base, info, node, vertices);
+    return this.path(base, info, node, info.points);
   }
 
-  star(base: XmlNode, node: StarNode, info: Rect & PaintDetails): XmlNode {
+  star(
+    base: XmlNode,
+    node: StarNode,
+    info: Rect & PaintDetails & PathDetails
+  ): XmlNode {
     base.children ??= [];
-    const pointCount = node.pointCount;
-    const innerRadius = node.innerRadius;
-    const vertices: Offset[] = [];
-    for (let i = 1; i <= pointCount; i++) {
-      const angle = (2 * Math.PI * i) / pointCount;
-      const x = info.x + Math.sin(angle) * innerRadius;
-      const y = info.y + Math.cos(angle) * innerRadius;
-      vertices.push({ x, y });
-    }
-    return this.path(base, info, node, vertices);
+    return this.path(base, info, node, info.points);
   }
 
   vector(base: XmlNode, node: VectorNode, info: Rect): XmlNode {
