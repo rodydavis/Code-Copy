@@ -1,5 +1,5 @@
 import { BaseExporter, Offset, PaintDetails } from "./base";
-import { XmlNode, xmlNode } from "./utils";
+import { XmlNode, xmlNodeToString } from "./xml";
 
 export class SVGExporter extends BaseExporter<XmlNode> {
   create(): XmlNode {
@@ -14,7 +14,7 @@ export class SVGExporter extends BaseExporter<XmlNode> {
   }
 
   save(base: XmlNode): string {
-    const raw = xmlNode(base);
+    const raw = xmlNodeToString(base);
     return raw.join("\n");
   }
 
