@@ -314,9 +314,9 @@ export abstract class BaseExporter<T> {
     for (let i = 0; i < points.length; i++) {
       const point = points[i];
       if (i === 0) {
-        path += `M ${point.x} ${point.y}`;
+        path += `M${point.x} ${point.y}`;
       } else {
-        path += ` L ${point.x} ${point.y}`;
+        path += `L${point.x} ${point.y}`;
       }
     }
     return path;
