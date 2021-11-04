@@ -20,6 +20,10 @@ exportTarget.addEventListener("MDCTabBar:activated", (e) => {
     value = ExportTarget.SVG;
     editor.setOption("mode", "xml");
   }
+  if (tab === 1) {
+    value = ExportTarget.Canvas;
+    editor.setOption("mode", "javascript");
+  }
   parent.postMessage({ pluginMessage: { type: "export-type", value } }, "*");
 });
 

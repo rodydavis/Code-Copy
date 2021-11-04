@@ -7,7 +7,11 @@ export class SVGExporter extends BaseExporter<XmlNode> {
       tag: "svg",
       attrs: {
         xmlns: "http://www.w3.org/2000/svg",
+        "xmlns:xlink": "http://www.w3.org/1999/xlink",
+        version: "1.1",
         viewbox: `0 0 ${this.size.width} ${this.size.height}`,
+        preserveAspectRatio: "xMidYMid meet",
+        overflow: "visible",
       },
       children: [],
     };
@@ -21,6 +25,38 @@ export class SVGExporter extends BaseExporter<XmlNode> {
   title(base: XmlNode, value: string): XmlNode {
     base.children ??= [];
     base.children.push(title(value));
+    return base;
+  }
+
+  path(
+    base: XmlNode,
+    info: Rect & PaintDetails,
+    node: SceneNode & LayoutMixin & MinimalStrokesMixin,
+    points: Offset[]
+  ): XmlNode {
+    const rotation = node.rotation;
+    const strokeWidth = node.strokeWeight;
+    base.children ??= [];
+    let path = "";
+    for (let i = 0; i < points.length; i++) {
+      const point = points[i];
+      if (i === 0) {
+        path += `M ${point.x} ${point.y}`;
+      } else {
+        path += ` L ${point.x} ${point.y}`;
+      }
+    }
+    base.children.push({
+      tag: "path",
+      attrs: {
+        ...geometryAttrs(info),
+        ...paintAttrs(info),
+        d: path,
+        transform: `rotate(${rotation * -1} ${info.x} ${info.y})`,
+        "stroke-width": `${strokeWidth}`,
+      },
+      children: [title(node.name)],
+    });
     return base;
   }
 
@@ -145,27 +181,14 @@ export class SVGExporter extends BaseExporter<XmlNode> {
   }
 
   line(base: XmlNode, node: LineNode, info: Rect & PaintDetails): XmlNode {
-    base.children ??= [];
-    const strokeWidth = node.strokeWeight;
-    const rotation = node.rotation;
     const x1 = info.x;
     const y1 = info.y;
     const x2 = info.x + info.width;
     const y2 = info.y + info.height;
-    base.children.push({
-      tag: "line",
-      attrs: {
-        ...paintAttrs(info),
-        x1: `${x1}`,
-        y1: `${y1}`,
-        x2: `${x2}`,
-        y2: `${y2}`,
-        "stroke-width": `${strokeWidth}`,
-        transform: `rotate(${rotation * -1}, ${x1}, ${y1})`,
-      },
-      children: [title(node.name)],
-    });
-    return base;
+    return this.path(base, info, node, [
+      { x: x1, y: y1 },
+      { x: x2, y: y2 },
+    ]);
   }
 
   polygon(
@@ -174,72 +197,29 @@ export class SVGExporter extends BaseExporter<XmlNode> {
     info: Rect & PaintDetails
   ): XmlNode {
     base.children ??= [];
-    const strokeWidth = node.strokeWeight;
-    const rotation = node.rotation;
-    const borderRadius =
-      typeof node.cornerRadius === "number" ? node.cornerRadius : 0;
     const pointCount = node.pointCount;
     const vertices: Offset[] = [];
     for (let i = 1; i <= pointCount; i++) {
-      vertices.push({
-        x: Math.sin((2 * Math.PI * i) / i),
-        y: Math.cos((2 * Math.PI * i) / i),
-      });
+      const angle = (i / pointCount) * Math.PI * 2;
+      const x = info.x + info.width / 2 + (Math.cos(angle) * info.width) / 2;
+      const y = info.y + info.height / 2 + (Math.sin(angle) * info.height) / 2;
+      vertices.push({ x, y });
     }
-    const points =
-      "0," +
-      vertices
-        .map((vertex) => {
-          const x = (vertex.x * info.width) / 2 + info.width / 2;
-          const y = (vertex.y * info.height) / 2 + info.height / 2;
-          return `${x} ${y}`;
-        })
-        .join(",") +
-      ",0";
-    base.children.push({
-      tag: "polygon",
-      attrs: {
-        ...geometryAttrs(info),
-        ...paintAttrs(info),
-        points: points,
-        "stroke-width": `${strokeWidth}`,
-
-        rx: `${borderRadius}`,
-        ry: `${borderRadius}`,
-        transform: `rotate(${rotation * -1}, ${info.x}, ${info.y})`,
-      },
-      children: [title(node.name)],
-    });
-    return base;
+    return this.path(base, info, node, vertices);
   }
 
   star(base: XmlNode, node: StarNode, info: Rect & PaintDetails): XmlNode {
     base.children ??= [];
     const pointCount = node.pointCount;
     const innerRadius = node.innerRadius;
-    const strokeWidth = node.strokeWeight;
-    const rotation = node.rotation;
-    const points =
-      "0," +
-      Array.from({ length: pointCount }, (_, i) => {
-        const angle = (2 * Math.PI * i) / pointCount;
-        const x = Math.sin(angle) * innerRadius;
-        const y = Math.cos(angle) * innerRadius;
-        return `${x} ${y}`;
-      }).join(",") +
-      ",0";
-    base.children.push({
-      tag: "polygon",
-      attrs: {
-        ...geometryAttrs(info),
-        ...paintAttrs(info),
-        points: points,
-        "stroke-width": `${strokeWidth}`,
-        transform: `rotate(${rotation * -1}, ${info.x}, ${info.y})`,
-      },
-      children: [title(node.name)],
-    });
-    return base;
+    const vertices: Offset[] = [];
+    for (let i = 1; i <= pointCount; i++) {
+      const angle = (2 * Math.PI * i) / pointCount;
+      const x = info.x + Math.sin(angle) * innerRadius;
+      const y = info.y + Math.cos(angle) * innerRadius;
+      vertices.push({ x, y });
+    }
+    return this.path(base, info, node, vertices);
   }
 
   vector(base: XmlNode, node: VectorNode, info: Rect): XmlNode {

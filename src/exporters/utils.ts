@@ -9,4 +9,5 @@ export function figmaToHex(rgb: RGB) {
 
 export enum ExportTarget {
   SVG = "svg",
+  Canvas = "canvas",
 }

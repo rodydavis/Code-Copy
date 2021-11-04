@@ -1,4 +1,5 @@
 import { BaseExporter } from "./exporters/base";
+import { CanvasExport } from "./exporters/canvas";
 import { SVGExporter } from "./exporters/svg";
 import { ExportTarget } from "./exporters/utils";
 
@@ -31,6 +32,9 @@ function refresh() {
   switch (exportType) {
     case ExportTarget.SVG:
       exporter = new SVGExporter();
+      break;
+    case ExportTarget.Canvas:
+      exporter = new CanvasExport();
       break;
   }
   const nodes = figma.currentPage.selection || [];
