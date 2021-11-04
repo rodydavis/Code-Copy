@@ -1,6 +1,6 @@
 # Cody Copy
 
-Figma plugin to copy code in various formats.
+Figma plugin to copy code in various formats with the goal of providing variables when possible and making it accessible by default.
 
 ## Supported
 
