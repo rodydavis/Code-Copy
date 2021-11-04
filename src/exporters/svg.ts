@@ -92,8 +92,8 @@ export class SVGExporter extends BaseExporter<XmlNode> {
   text(base: XmlNode, node: TextNode, info: Rect & PaintDetails): XmlNode {
     base.children ??= [];
     const rotation = node.rotation;
-    const textAlign = node.textAlignHorizontal;
-    const textBaseline = node.textAlignVertical;
+    const textAlign = node.textAlignHorizontal.toLowerCase();
+    const textBaseline = node.textAlignVertical.toLowerCase();
     const fontSize = typeof node.fontSize === "number" ? node.fontSize : 12;
     let fontFamily = '"Helvetica Neue", Helvetica, Arial, sans-serif';
     let fontStyle = "normal";
@@ -129,6 +129,7 @@ export class SVGExporter extends BaseExporter<XmlNode> {
       attrs: {
         ...geometryAttrs(info),
         ...paintAttrs(info),
+        y: `${info.y + info.height}`,
         "stroke-width": `${strokeWidth}`,
         "text-anchor": `${textAlign}`,
         "dominant-baseline": `${textBaseline}`,
