@@ -1,5 +1,5 @@
 import { BaseExporter, Offset, PaintDetails } from "./base";
-import { XmlNode, xmlNodeToString } from "./xml";
+import { PossibleNode, XmlNode, xmlNodeToString } from "./xml";
 
 export class SVGExporter extends BaseExporter<XmlNode> {
   create(): XmlNode {
@@ -36,7 +36,6 @@ export class SVGExporter extends BaseExporter<XmlNode> {
   ): XmlNode {
     const rotation = node.rotation;
     const strokeWidth = node.strokeWeight;
-    base.children ??= [];
     let path = "";
     for (let i = 0; i < points.length; i++) {
       const point = points[i];
@@ -46,7 +45,7 @@ export class SVGExporter extends BaseExporter<XmlNode> {
         path += ` L ${point.x} ${point.y}`;
       }
     }
-    base.children.push({
+    return nest(base, {
       tag: "path",
       attrs: {
         ...geometryAttrs(info),
@@ -57,19 +56,14 @@ export class SVGExporter extends BaseExporter<XmlNode> {
       },
       children: [title(node.name)],
     });
-    return base;
   }
 
   newLine(base: XmlNode): XmlNode {
-    base.children ??= [];
-    base.children.push("");
-    return base;
+    return nest(base, "");
   }
 
   comment(base: XmlNode, value: string) {
-    base.children ??= [];
-    base.children.push(`<!-- ${value} -->`);
-    return base;
+    return nest(base, `<!-- ${value} -->`);
   }
 
   rectangle(
@@ -77,12 +71,11 @@ export class SVGExporter extends BaseExporter<XmlNode> {
     node: RectangleNode,
     info: Rect & PaintDetails
   ): XmlNode {
-    base.children ??= [];
     const strokeWidth = node.strokeWeight;
     const borderRadius =
       typeof node.cornerRadius === "number" ? node.cornerRadius : 0;
     const rotation = node.rotation;
-    base.children.push({
+    return nest(base, {
       tag: "rect",
       attrs: {
         ...geometryAttrs(info),
@@ -94,7 +87,6 @@ export class SVGExporter extends BaseExporter<XmlNode> {
       },
       children: [title(node.name)],
     });
-    return base;
   }
 
   ellipse(
@@ -102,14 +94,13 @@ export class SVGExporter extends BaseExporter<XmlNode> {
     node: EllipseNode,
     info: Rect & PaintDetails
   ): XmlNode {
-    base.children ??= [];
     const rotation = node.rotation;
     const cx = info.x + info.width / 2;
     const cy = info.y + info.height / 2;
     const rx = info.width / 2;
     const ry = info.height / 2;
     const strokeWidth = node.strokeWeight;
-    base.children.push({
+    return nest(base, {
       tag: "ellipse",
       attrs: {
         ...paintAttrs(info),
@@ -122,11 +113,9 @@ export class SVGExporter extends BaseExporter<XmlNode> {
       },
       children: [title(node.name)],
     });
-    return base;
   }
 
   text(base: XmlNode, node: TextNode, info: Rect & PaintDetails): XmlNode {
-    base.children ??= [];
     const rotation = node.rotation;
     const textAlign = node.textAlignHorizontal.toLowerCase();
     const textBaseline = node.textAlignVertical.toLowerCase();
@@ -160,7 +149,7 @@ export class SVGExporter extends BaseExporter<XmlNode> {
     // const paragraphSpacing: number = node.paragraphSpacing;
     // const autoRename: boolean = node.autoRename;
 
-    base.children.push({
+    return nest(base, {
       tag: "text",
       attrs: {
         ...geometryAttrs(info),
@@ -176,8 +165,6 @@ export class SVGExporter extends BaseExporter<XmlNode> {
       },
       children: [textData],
     });
-
-    return base;
   }
 
   line(base: XmlNode, node: LineNode, info: Rect & PaintDetails): XmlNode {
@@ -277,6 +264,12 @@ export class SVGExporter extends BaseExporter<XmlNode> {
   sticky(base: XmlNode, node: StickyNode, info: Rect): XmlNode {
     return base;
   }
+}
+
+function nest(base: XmlNode, child: PossibleNode): XmlNode {
+  base.children ??= [];
+  base.children.push(child);
+  return base;
 }
 
 function title(value: string) {
